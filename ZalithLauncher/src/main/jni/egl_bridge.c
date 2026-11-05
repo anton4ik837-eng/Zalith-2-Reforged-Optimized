@@ -324,7 +324,7 @@ void calculateFPS() {
         fps = frameCount;
         frameCount = 0;
         // One lightweight sample per second; stdout/stderr is captured with the game log.
-        fprintf(stderr, "[ZALITH_PERF] fps=%d renderer=%d\\n", fps, pojav_environ->config_renderer);
+        fprintf(stderr, "[ZALITH_PERF] fps=%d renderer=%d\n", fps, pojav_environ->config_renderer);
     }
 
     if (!pojav_environ->hasGraphicOutput && pojav_environ->dalvikJavaVMPtr && pojav_environ->bridgeClazz && pojav_environ->method_onGraphicOutput) {
