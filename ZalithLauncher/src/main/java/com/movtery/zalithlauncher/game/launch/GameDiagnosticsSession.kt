@@ -98,7 +98,7 @@ internal class GameDiagnosticsSession private constructor(
             previousWallTime = now
             previousCpuTime = cpuNow
 
-            val javaRuntime = Runtime.getRuntime()
+            val javaRuntime = java.lang.Runtime.getRuntime()
             val javaUsed = javaRuntime.totalMemory() - javaRuntime.freeMemory()
             val javaCommitted = javaRuntime.totalMemory()
             val javaMax = javaRuntime.maxMemory()
