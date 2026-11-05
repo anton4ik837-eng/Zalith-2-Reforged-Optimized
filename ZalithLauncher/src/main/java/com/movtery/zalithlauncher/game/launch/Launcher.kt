@@ -195,7 +195,13 @@ abstract class Launcher(
         ZLBridge.initializeGameExitHook()
         ZLBridge.chdir(chdir())
 
-        val exitCode = VMLauncher.launchJVM(args.toTypedArray())
+        val diagnostics = GameDiagnosticsSession.start(context)
+        var exitCode = -1
+        try {
+            exitCode = VMLauncher.launchJVM(args.toTypedArray())
+        } finally {
+            diagnostics.stop(exitCode)
+        }
         LoggerBridge.append("Java Exit code: $exitCode")
         return exitCode
     }
