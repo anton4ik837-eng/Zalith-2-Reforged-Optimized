@@ -1,10 +1,13 @@
-name: Build CI
+name: Manual Debug Build
 
 on:
-  push:
-    branches:
-      - '**'
+  # APK builds are intentionally not triggered by commits or pushes.
+  # Start a Debug build manually from the Actions tab when needed.
   workflow_dispatch:
+
+concurrency:
+  group: manual-debug-build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   Build:
