@@ -195,12 +195,20 @@ abstract class Launcher(
         ZLBridge.initializeGameExitHook()
         ZLBridge.chdir(chdir())
 
-        val diagnostics = GameDiagnosticsSession.start(context)
+        val diagnostics = runCatching {
+            GameDiagnosticsSession.start(context)
+        }.onFailure {
+            Logger.warning(TAG, "Performance diagnostics could not be started; continuing without telemetry", it)
+        }.getOrNull()
         var exitCode = -1
         try {
             exitCode = VMLauncher.launchJVM(args.toTypedArray())
         } finally {
-            diagnostics.stop(exitCode)
+            runCatching {
+                diagnostics?.stop(exitCode)
+            }.onFailure {
+                Logger.warning(TAG, "Performance diagnostics could not be finalized", it)
+            }
         }
         LoggerBridge.append("Java Exit code: $exitCode")
         return exitCode
