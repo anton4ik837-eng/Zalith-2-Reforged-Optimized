@@ -74,7 +74,7 @@ internal class GameDiagnosticsSession private constructor(
             "model=${Build.MODEL}",
             "device=${Build.DEVICE}",
             "hardware=${Build.HARDWARE}",
-            "soc_model=${Build.SOC_MODEL.takeIf { Build.VERSION.SDK_INT >= 31 } ?: "unavailable"}",
+            "soc_model=${if (Build.VERSION.SDK_INT >= 31) Build.SOC_MODEL else "unavailable"}",
             "android_release=${Build.VERSION.RELEASE}",
             "sdk_int=${Build.VERSION.SDK_INT}",
             "supported_abis=${Build.SUPPORTED_ABIS.joinToString(",")}",
