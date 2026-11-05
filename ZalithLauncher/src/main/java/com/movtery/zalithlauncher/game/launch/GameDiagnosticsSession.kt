@@ -46,6 +46,7 @@ import java.util.Locale
 internal class GameDiagnosticsSession private constructor(
     private val context: Context,
     private val output: File,
+    private val sourceGameLog: File,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var sampler: Job? = null
@@ -159,8 +160,16 @@ internal class GameDiagnosticsSession private constructor(
     suspend fun stop(exitCode: Int) {
         sampler?.cancelAndJoin()
         writeSample("session_end")
+        val copiedGameLog = runCatching {
+            if (sourceGameLog.isFile) {
+                val destination = File(output.parentFile, "game_output_${output.nameWithoutExtension.removePrefix("game_diagnostics_")}.log")
+                sourceGameLog.copyTo(destination, overwrite = true)
+                destination.name
+            } else null
+        }.getOrNull()
         synchronized(output) {
             output.appendText("# game_exit_code=$exitCode\n")
+            output.appendText("# copied_game_log=${copiedGameLog ?: "not_available"}\n")
         }
         scope.coroutineContext[Job]?.cancel()
         Logger.info(TAG, "Performance diagnostics saved: ${output.absolutePath}")
@@ -171,10 +180,10 @@ internal class GameDiagnosticsSession private constructor(
         private const val SAMPLE_INTERVAL_MS = 5_000L
         private const val MB = 1024L * 1024L
 
-        fun start(context: Context): GameDiagnosticsSession {
+        fun start(context: Context, gameLog: File): GameDiagnosticsSession {
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
             val file = File(PathManager.DIR_LAUNCHER_LOGS, "game_diagnostics_$timestamp.log")
-            return GameDiagnosticsSession(context.applicationContext, file)
+            return GameDiagnosticsSession(context.applicationContext, file, gameLog)
         }
     }
 }
