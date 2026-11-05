@@ -8,7 +8,7 @@ After starting and then closing Minecraft, look in the launcher's external app f
 
 `Android/data/<launcher.package.name>/files/logs/`
 
-The trace is named `game_diagnostics_YYYYMMDD_HHMMSS.log`. It is also included in the launcher's existing **Pack logs** archive because it is stored in the normal logs directory.
+The trace is named `game_diagnostics_YYYYMMDD_HHMMSS.log`. After a normal game exit, the matching Minecraft output log is copied beside it as `game_output_YYYYMMDD_HHMMSS.log`. Both files are included in the launcher's existing **Pack logs** archive because they are stored in the normal logs directory.
 
 ## What is recorded
 
@@ -26,7 +26,7 @@ Sampling is deliberately coarse (five seconds) to keep overhead and log size low
 3. Load a reproducible world and keep the game running for at least 5–10 minutes.
 4. Include a period of normal play, a period with chunk loading/generation, and (if relevant) a period with shaders.
 5. Exit Minecraft normally so the final sample and exit code are written.
-6. Upload the matching `game_diagnostics_*.log`, `latest_game.log` (if present), and the launcher log archive.
+6. Upload the matching `game_diagnostics_*.log`, its paired `game_output_*.log`, and preferably the launcher **Pack logs** archive. If the game crashes before a normal exit, the paired output-log copy may not be created; include the original game log from the Minecraft instance instead.
 
 For a useful before/after comparison, keep the Minecraft version, world, render distance, simulation distance, renderer, shader pack and mod list unchanged.
 
