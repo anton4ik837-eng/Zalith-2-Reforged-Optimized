@@ -23,7 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: ["all", "arm", "arm64", "x86", "x86_64"]
+        # Debug builds target the project's primary Android test device (arm64)
+        # and produce one installable APK. Release builds retain every ABI.
+        arch: ${{ inputs.variant == 'Debug' && fromJSON('["arm64"]') || fromJSON('["all", "arm", "arm64", "x86", "x86_64"]') }}
       fail-fast: false
 
     env:
