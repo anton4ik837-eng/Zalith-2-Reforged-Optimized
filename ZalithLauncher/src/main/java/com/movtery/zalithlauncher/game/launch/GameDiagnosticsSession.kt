@@ -24,7 +24,6 @@ import android.os.Process
 import android.os.SystemClock
 import com.movtery.zalithlauncher.path.PathManager
 import com.movtery.zalithlauncher.utils.logging.Logger
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -78,7 +77,7 @@ internal class GameDiagnosticsSession private constructor(
             "android_release=${Build.VERSION.RELEASE}",
             "sdk_int=${Build.VERSION.SDK_INT}",
             "supported_abis=${Build.SUPPORTED_ABIS.joinToString(",")}",
-            "available_processors=${Runtime.getRuntime().availableProcessors()}",
+            "available_processors=${java.lang.Runtime.getRuntime().availableProcessors()}",
             "process_id=${Process.myPid()}",
             "java_version=${System.getProperty("java.version") ?: "unknown"}",
             "java_vm=${System.getProperty("java.vm.name") ?: "unknown"}",
