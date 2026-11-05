@@ -33,6 +33,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.File
+import java.io.FileOutputStream
+import java.io.RandomAccessFile
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -52,12 +54,16 @@ internal class GameDiagnosticsSession private constructor(
     private var sampler: Job? = null
     private var previousWallTime = SystemClock.elapsedRealtime()
     private var previousCpuTime = Process.getElapsedCpuTime()
+    private val gameLogOutput = File(output.parentFile, "game_output_" + output.nameWithoutExtension.removePrefix("game_diagnostics_") + ".log")
+    private var copiedGameLogBytes = 0L
 
     init {
         output.parentFile?.mkdirs()
         output.appendText("# Zalith game performance diagnostics\n")
         output.appendText("# Sampling interval: 5000 ms\n")
         writeDeviceInfo()
+        runCatching { gameLogOutput.createNewFile() }
+        appendGameLogDelta()
         writeSample("session_start")
         sampler = scope.launch {
             while (isActive) {
@@ -141,8 +147,43 @@ internal class GameDiagnosticsSession private constructor(
             synchronized(output) {
                 output.appendText(line + "\n")
             }
+            appendGameLogDelta()
         }.onFailure { error ->
             Logger.warning(TAG, "Unable to collect a performance sample", error)
+        }
+    }
+
+    /**
+     * Mirror newly appended Minecraft log bytes while the game is running.
+     * This keeps a useful game_output file even if Android kills the process
+     * before stop() can run.
+     */
+    private fun appendGameLogDelta() {
+        runCatching {
+            if (!sourceGameLog.isFile) return
+            val sourceLength = sourceGameLog.length()
+            if (sourceLength < copiedGameLogBytes) {
+                // The launcher/game rotated or truncated the source log.
+                gameLogOutput.writeBytes(ByteArray(0))
+                copiedGameLogBytes = 0L
+            }
+            if (sourceLength == copiedGameLogBytes) return
+
+            RandomAccessFile(sourceGameLog, "r").use { input ->
+                input.seek(copiedGameLogBytes)
+                FileOutputStream(gameLogOutput, true).use { destination ->
+                    val buffer = ByteArray(16 * 1024)
+                    while (true) {
+                        val count = input.read(buffer)
+                        if (count <= 0) break
+                        destination.write(buffer, 0, count)
+                        copiedGameLogBytes += count
+                    }
+                    destination.flush()
+                }
+            }
+        }.onFailure { error ->
+            Logger.warning(TAG, "Unable to mirror Minecraft output log", error)
         }
     }
 
@@ -160,13 +201,8 @@ internal class GameDiagnosticsSession private constructor(
     suspend fun stop(exitCode: Int) {
         sampler?.cancelAndJoin()
         writeSample("session_end")
-        val copiedGameLog = runCatching {
-            if (sourceGameLog.isFile) {
-                val destination = File(output.parentFile, "game_output_${output.nameWithoutExtension.removePrefix("game_diagnostics_")}.log")
-                sourceGameLog.copyTo(destination, overwrite = true)
-                destination.name
-            } else null
-        }.getOrNull()
+        appendGameLogDelta()
+        val copiedGameLog = gameLogOutput.name.takeIf { gameLogOutput.isFile && gameLogOutput.length() > 0L }
         synchronized(output) {
             output.appendText("# game_exit_code=$exitCode\n")
             output.appendText("# copied_game_log=${copiedGameLog ?: "not_available"}\n")
