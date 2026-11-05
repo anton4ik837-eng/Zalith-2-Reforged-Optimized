@@ -84,6 +84,8 @@ class GameLauncher(
     onExit: (code: Int, isSignal: Boolean) -> Unit,
     openPath: (folder: File) -> Unit
 ) : Launcher(onExit, openPath) {
+    override val collectGameDiagnostics: Boolean = true
+
     private lateinit var gameManifest: GameManifest
     private var jnaDir: File? = null
     private var configuredRenderer: RendererLaunchConfig? = null
