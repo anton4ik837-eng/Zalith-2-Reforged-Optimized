@@ -123,6 +123,9 @@ abstract class Launcher(
     abstract fun getLogFile(): File
     abstract fun exit()
 
+    /** Enable detailed performance telemetry only for actual Minecraft sessions. */
+    protected open val collectGameDiagnostics: Boolean = false
+
     /**
      * 游戏目录（.minecraft），默认为当前选择的游戏目录
      */
@@ -196,7 +199,7 @@ abstract class Launcher(
         ZLBridge.chdir(chdir())
 
         val diagnostics = runCatching {
-            GameDiagnosticsSession.start(context)
+            if (collectGameDiagnostics) GameDiagnosticsSession.start(context, getLogFile()) else null
         }.onFailure {
             Logger.warning(TAG, "Performance diagnostics could not be started; continuing without telemetry", it)
         }.getOrNull()
